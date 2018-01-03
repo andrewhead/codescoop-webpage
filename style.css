@@ -1,0 +1,48 @@
+body {
+  background: #fdecc8;
+  color: black;
+  font-family: Helvetica, Arial, sans-serif;
+  padding-top: 1em;
+}
+
+.main-container {
+  background: white;
+  border-radius: 20px;
+  padding: 1em 3em;
+  margin: auto;
+  width: 60%;
+}
+
+.video-container {
+  position: relative;
+  width: 100%;
+  height: 0;
+  padding-bottom: 56.25%;
+}
+
+.video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+#real-video-container {
+  /* Video starts out not showing.  Instead, show the teaser image */
+  display: none;
+}
+
+img.video {
+  border: 3px solid black;
+  cursor: pointer;
+}
+
+.authors {
+  font-weight: normal;
+  font-size: 1.25em;
+}
+
+.centered {
+  text-align: center;
+}

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <meta charset="utf-8" />
+    <!--Hide this page and links from it from typical crawlers until the paper is published-->
+    <meta name="robots" content="noindex,nofollow">
+    <link rel="icon" href="favicon.png">
+    <link rel="stylesheet" href="style.css">
+    <title>CodeScoop | Home</title>
+    </head>
+    <body>
+        <div class="main-container">
+            <h1>Interactive Extraction of Examples from Existing Code</h1>
+            <h2 class="authors">Andrew Head, Elena L. Glassman, Björn Hartmann, Marti A. Hearst</h2>
+            <div class="video-container" onclick="this.nextElementSibling.style.display = 'block'; this.nextElementSibling.children[0].src = 'http://www.youtube.com/embed/rUtVl4XwDOY?autoplay=1'; this.style.display = 'none';">
+                <img class="video" src="images/video_teaser.png"/>
+            </div>
+            <div class="video-container" id="real-video-container">
+                <iframe class="video" frameborder="0" allowfullscreen></iframe>
+            </div>
+            <p class="centered"><a href="https://github.com/andrewhead/codescoop">Download and try out the tool yourself.</a></p>
+            <p><b>Abstract</b>: Programmers frequently learn from examples produced and shared by other programmers. However, it can be challenging and time-consuming to produce concise, working code examples. We conducted a formative study where 12 participants made examples based on their own code. This revealed a key hurdle: making meaningful simplifications without introducing errors. Based on this insight, we designed a mixed-initiative tool, CodeScoop, to help programmers extract executable, simplified code from existing code. CodeScoop enables programmers to “scoop” out a relevant subset of code. Techniques include selectively including control structures and recording an execution trace that allows authors to substitute literal values for code and variables. In a controlled study with 19 participants, CodeScoop helped programmers extract executable code examples with the intended behavior more easily than with a standard code editor.</p>
+            <!--<p>Want to learn more?  Read the <a href="http://andrewhead.info/pdf/example_extraction.pdf">CHI 2018 paper</a>.</p>-->
+            <h2>Additional Materials</h2>
+            <ul>
+                <li><a href="files/source_programs_and_examples.pdf">Evaluation Details: Source programs and extracted examples</a></li>
+                <li><a href="files/formative_study.pdf">Formative Study: Observations of 12 programmers creating examples</a></li>
+                <li><a href="files/system_design.pdf">System Implementation Details</a></li>
+                <li><a href="files/video_figure.mp4">Extended Video Figure</a></li>
+            </ul>
+        </div>
+    </body>
+</html>
