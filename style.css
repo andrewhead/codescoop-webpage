@@ -1,5 +1,5 @@
 body {
-  background: #fff3dd;
+  background: #eaf2ff;
   color: black;
   font-family: Helvetica, Arial, sans-serif;
   padding-top: 1em;
@@ -11,6 +11,7 @@ body {
   padding: 1em 3em;
   margin: auto;
   width: 60%;
+  max-width: 600px;
 }
 
 .video-container {
@@ -20,7 +21,7 @@ body {
   padding-bottom: 56.25%;
 }
 
-.video {
+iframe.video {
   position: absolute;
   top: 0;
   left: 0;
@@ -34,8 +35,10 @@ body {
 }
 
 img.video {
+  width: 100%;
   border: 3px solid black;
   cursor: pointer;
+  vertical-align: center;
 }
 
 .authors {

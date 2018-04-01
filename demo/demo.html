@@ -1,11 +1,222 @@
 <!DOCTYPE html>
 <html>
 <head>
+
+  <!--Don't scrape this page-->
+  <meta name="robots" content="noindex,nofollow">
+
+  <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+  <meta content="utf-8" http-equiv="encoding">
+
   <title>CodeScoop Demo</title>
   <link rel="icon" href="favicon.png">
+
+  <!--Detect browser before any other polyfills are added-->
+  <script>
+    var isChrome = !!window.chrome && !!window.chrome.webstore;
+    var isFirefox = typeof InstallTrigger !== 'undefined';
+    var isSafari = (
+      /constructor/i.test(window.HTMLElement) ||
+      (function (p) {
+         return p.toString() === "[object SafariRemoteNotification]"; 
+      }) (!window['safari'] || (typeof safari !== 'undefined' && safari.pushNotification))
+    );
+    console.log("Browser Detection...");
+    console.log("Is Chrome?", isChrome);
+    console.log("Is Firefox?", isFirefox);
+    console.log("Is Safari?", isSafari);
+  </script>
+
+  <!--Babel polyfills (general language support)-->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-polyfill/6.26.0/polyfill.js"></script>
+
+  <!--Polyfills for typical HTMLElement operations (e.g., remove)-->
+  <!--remove operation-->
+  <!--// from:https://github.com/jserz/js_piece/blob/master/DOM/ChildNode/remove()/remove().md-->
+  <script>
+    (function (arr) {
+      arr.forEach(function (item) {
+        if (item.hasOwnProperty('remove')) {
+          return;
+        }
+        Object.defineProperty(item, 'remove', {
+          configurable: true,
+          enumerable: true,
+          writable: true,
+          value: function remove() {
+            if (this.parentNode !== null)
+              this.parentNode.removeChild(this);
+          }
+        });
+      });
+    })([Element.prototype, CharacterData.prototype, DocumentType.prototype]);
+  </script>
+
+  <!--Cross-browser scrolling support-->
+  <!--Source: https://developer.mozilla.org/en-US/docs/Web/Events/wheel-->
+  <script>
+    // creates a global "addWheelListener" method
+    // example: addWheelListener( elem, function( e ) { console.log( e.deltaY ); e.preventDefault(); } );
+    (function(window,document) {
+
+      var prefix = "", _addEventListener, support;
+
+      // detect event model
+      if ( window.addEventListener ) {
+        _addEventListener = "addEventListener";
+      } else {
+        _addEventListener = "attachEvent";
+        prefix = "on";
+      }
+
+      // detect available wheel event
+      support = "onwheel" in document.createElement("div") ? "wheel" : // Modern browsers support "wheel"
+                document.onmousewheel !== undefined ? "mousewheel" : // Webkit and IE support at least "mousewheel"
+                "DOMMouseScroll"; // let's assume that remaining browsers are older Firefox
+
+      window.addWheelListener = function( elem, callback, useCapture ) {
+        _addWheelListener( elem, support, callback, useCapture );
+
+        // handle MozMousePixelScroll in older Firefox
+        if( support == "DOMMouseScroll" ) {
+          _addWheelListener( elem, "MozMousePixelScroll", callback, useCapture );
+        }
+      };
+
+      function _addWheelListener( elem, eventName, callback, useCapture ) {
+        elem[ _addEventListener ]( prefix + eventName, support == "wheel" ? callback : function( originalEvent ) {
+          !originalEvent && ( originalEvent = window.event );
+
+          // create a normalized event object
+          var event = {
+            // keep a ref to the original event object
+            originalEvent: originalEvent,
+            target: originalEvent.target || originalEvent.srcElement,
+            type: "wheel",
+            deltaMode: originalEvent.type == "MozMousePixelScroll" ? 0 : 1,
+            deltaX: 0,
+            deltaY: 0,
+            deltaZ: 0,
+            preventDefault: function() {
+              originalEvent.preventDefault ?
+                originalEvent.preventDefault() :
+                originalEvent.returnValue = false;
+            }
+          };
+          
+          // calculate deltaY (and deltaX) according to the event
+          if ( support == "mousewheel" ) {
+            event.deltaY = - 1/40 * originalEvent.wheelDelta;
+            // Webkit also support wheelDeltaX
+            originalEvent.wheelDeltaX && ( event.deltaX = - 1/40 * originalEvent.wheelDeltaX );
+          } else {
+            event.deltaY = originalEvent.deltaY || originalEvent.detail;
+          }
+
+          // it's time to fire the callback
+          return callback( event );
+
+        }, useCapture || false );
+      }
+
+    })(window,document);
+  </script>
+
+  <!--Normalize wheel scroll amount across browsers-->
+  <!--Source: https://github.com/facebookarchive/fixed-data-table/blob/master/src/vendor_upstream/dom/normalizeWheel.js-->
+  <script>
+    var PIXEL_STEP  = 10;
+    var LINE_HEIGHT = 40;
+    var PAGE_HEIGHT = 800;
+
+    function normalizeWheel(/*object*/ event) /*object*/ {
+      var sX = 0, sY = 0,       // spinX, spinY
+          pX = 0, pY = 0;       // pixelX, pixelY
+
+      // Legacy
+      if ('detail'      in event) { sY = event.detail; }
+      if ('wheelDelta'  in event) { sY = -event.wheelDelta / 120; }
+      if ('wheelDeltaY' in event) { sY = -event.wheelDeltaY / 120; }
+      if ('wheelDeltaX' in event) { sX = -event.wheelDeltaX / 120; }
+
+      // side scrolling on FF with DOMMouseScroll
+      if ( 'axis' in event && event.axis === event.HORIZONTAL_AXIS ) {
+        sX = sY;
+        sY = 0;
+      }
+
+      pX = sX * PIXEL_STEP;
+      pY = sY * PIXEL_STEP;
+
+      if ('deltaY' in event) { pY = event.deltaY; }
+      if ('deltaX' in event) { pX = event.deltaX; }
+
+      if ((pX || pY) && event.deltaMode) {
+        if (event.deltaMode == 1) {          // delta in LINE units
+          pX *= LINE_HEIGHT;
+          pY *= LINE_HEIGHT;
+        } else {                             // delta in PAGE units
+          pX *= PAGE_HEIGHT;
+          pY *= PAGE_HEIGHT;
+        }
+      }
+
+      // Fall-back if spin cannot be determined
+      if (pX && !sX) { sX = (pX < 1) ? -1 : 1; }
+      if (pY && !sY) { sY = (pY < 1) ? -1 : 1; }
+
+      return { spinX  : sX,
+               spinY  : sY,
+               pixelX : pX,
+               pixelY : pY };
+    }
+  </script>
+
+  <!--CustomEvent for text editor focus-->
+  <script>
+    (function () {
+
+      if ( typeof window.CustomEvent === "function" ) return false;
+
+      function CustomEvent ( event, params ) {
+        params = params || { bubbles: false, cancelable: false, detail: undefined };
+        var evt = document.createEvent( 'CustomEvent' );
+        evt.initCustomEvent( event, params.bubbles, params.cancelable, params.detail );
+        return evt;
+       }
+
+      CustomEvent.prototype = window.Event.prototype;
+
+      window.CustomEvent = CustomEvent;
+    })();
+  </script>
+
+  <!--matches-->
+  <script>
+    if (!Element.prototype.matches) {
+        Element.prototype.matches = 
+            Element.prototype.matchesSelector || 
+            Element.prototype.mozMatchesSelector ||
+            Element.prototype.msMatchesSelector || 
+            Element.prototype.oMatchesSelector || 
+            Element.prototype.webkitMatchesSelector ||
+            function(s) {
+                var matches = (this.document || this.ownerDocument).querySelectorAll(s),
+                    i = matches.length;
+                while (--i >= 0 && matches.item(i) !== this) {}
+                return i > -1;            
+            };
+    }
+</script>
+
+  <!--For document.importNode-->
+  <script src="demo/webcomponents-lite.js"></script>
+
+  <!--jQuery and jQuery UI (for loading)-->
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-  <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css">
   <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+  <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css">
+
   <script>
     function updateStatus(message) {
       console.error(message);
@@ -15,17 +226,25 @@
       status.innerHTML = message;
       document.body.appendChild(status);
     }
-    function onAtomLoadError() {
-      updateStatus('Could not load atom.js. Check your console.');
+    function onAtomLoadError(e) {
+      updateStatus('Could not load atom.js. Check your console.', e);
     }
   </script>
+
 </head>
 <body>
   
   <style>
-    h1, div.progress-label {
+
+    div.loading_page h1, div.loading_page h2, div.loading_page div.progress-label, div.loading_page p {
       font-family: Helvetica, Arial, sans-serif;
       text-align: center;
+    }
+    div#apologies h1, div#apologies h2 {
+      text-align: left;
+    }
+    div.loading_page h2 {
+      font-weight: normal;
     }
     #resources-label, #atom-label {
       width: 100%;
@@ -43,7 +262,7 @@
     .progress-holder {
       width: 500px;
       position: absolute;
-      margin-top: -110px;
+      margin-top: -130px;
       margin-left: -250px;
       top: 50%;
       left: 50%;
@@ -52,72 +271,153 @@
     .ui-progressbar .ui-widget-header {
       background: #e5efff;
     }
+
+    #apologies {
+      width: 600px;
+      position: absolute;
+      margin-top: -80px;
+      margin-left: -300px;
+      top: 50%;
+      left: 50%;
+    }
+
   </style>
 
-  <div class='progress-holder'>
-    <h1>Loading the CodeScoop Demo...</h1>
-    <div id="resources-progress"><div class="progress-label" id="resources-label"></div></div>
-    <div id="atom-progress"><div class="progress-label" id="atom-label"></div></div>
+  <div class='loading_page'>
+
+    <div class='progress-holder'>
+      
+      <h1 id="title">Loading the CodeScoop Demo...</h1>
+      
+      <div id="resources-progress">
+        <div class="progress-label" id="resources-label"></div>
+      </div>
+      
+      <div id="atom-progress">
+        <div class="progress-label" id="atom-label">
+      </div></div>
+
+      <div id="initializing" style="display: none;">
+        <h2>Almost there!  Now launching the tool...<img style="height: 1.2em; width: 1.2em;" src="demo/loader.gif"></h2>
+        <p class="please_wait">This can take a few seconds, or a minute.  Hang tight!</a></p>
+      </div>
+
+    </div>
+
+    <div id='apologies' style="display:none;">
+      <h1>Sorry, the CodeScoop demo is not supported for your browser.</h1>
+      <h2>Please download a recent version of Chrome, Firefox, or Safari and try again.</h2>
+    </div>
+
   </div>
+
   <script>
 
-    function startAtom() {
-      loadAtom(({atom, fs}) => {
-        // Adding a root will cause the tree-view to pop open once it loads.
-        console.log("Home directory:", fs.getHomeDirectory());
-        atom.project.addPath(fs.getHomeDirectory());
-      });
+    // Browser detection snippet from:
+    // https://stackoverflow.com/questions/9847580/how-to-detect-safari-chrome-ie-firefox-and-opera-browser
+    // Note that this solution is brittle, and may not work for detecting future versions of Chrome and
+    // Firefox, and might even mis-diagnose other browsers eventually!
+    var isSupported = (isChrome || isFirefox || isSafari);
+    // if (!(isChrome || isFirefox || isSafari)) {
+    if (!isSupported) {
+      $('.progress-holder').css('display', 'none');
+      $('#apologies').css('display', 'block');
     }
 
-    $.ajaxSetup({
-      // Cache all scripts (they take a while to download)
-      cache: true,
-      error: onAtomLoadError,
-    });
+    if (isSupported) {
 
-    function trackProgress(barSelector, labelSelector, resourceString) {
-      $(barSelector).progressbar({
-        value: false,
-        complete: function() {
-          $(labelSelector).text("Done!");
+      function startAtom() {
+        loadAtom(function(obj) {
+          atom = obj.atom;
+          fs = obj.fs;
+          // Adding a root will cause the tree-view to pop open once it loads.
+          atom.project.addPath(fs.getHomeDirectory());
+        });
+      }
+
+      $.ajaxSetup({
+        // Cache all scripts (they take a while to download)
+        cache: true,
+        error: onAtomLoadError,
+        converters: {
+          // Don't evaluate fetched JavaScript immediately.  Let the page logic
+          // update the UI first.
+          "text script": function(text) {
+            return text;
+          }
         }
       });
-      $(labelSelector).text("Waiting to load " + resourceString + "...");
-      return function() {
-        var xhr = new window.XMLHttpRequest();
-        xhr.addEventListener("progress", function(evt) {
-          if (evt.lengthComputable) {
-            var percentComplete = evt.loaded / evt.total;
-            $(labelSelector).text("Loading " + resourceString + "...");
-            $(barSelector).progressbar("value", percentComplete * 100);
+
+      function trackProgress(barSelector, labelSelector, resourceString) {
+        $(barSelector).progressbar({
+          value: false,
+          complete: function() {
+            $(labelSelector).text("Done!");
           }
-        }, false);
-        xhr.addEventListener("load", function(evt) {
-          $(barSelector).progressbar("value", 100);
-          $(labelSelector).text("Loaded " + resourceString);
         });
-        return xhr;
+        $(labelSelector).text("Waiting to load " + resourceString + "...");
+        return function() {
+          var xhr = new window.XMLHttpRequest();
+          xhr.addEventListener("progress", function(evt) {
+            if (evt.lengthComputable) {
+              var percentComplete = evt.loaded / evt.total;
+              $(labelSelector).text("Loading " + resourceString + "...");
+              $(barSelector).progressbar("value", percentComplete * 100);
+            }
+          }, false);
+          xhr.addEventListener("load", function(evt) {
+            $(barSelector).progressbar("value", 100);
+            $(labelSelector).text("Loaded " + resourceString);
+          });
+          return xhr;
+        }
       }
+
+      var atomProgress = trackProgress(
+        '#atom-progress',
+        '#atom-label',
+        "CodeScoop");
+      var resourcesProgress = trackProgress(
+        '#resources-progress',
+        '#resources-label',
+        'CodeScoop libraries');
+
+      // Resources must be loaded before Atom
+      $.ajax({
+        dataType: "script",
+        url: "demo/atom-resources.js",
+        xhr: resourcesProgress,
+        success: function(resourcesText) {
+          $.ajax({
+            dataType: "script",
+            url: "demo/atom.js",
+            xhr: atomProgress,
+            success: function(atomText) {
+              $("#atom-progress").progressbar("value", 100);
+              $("#atom-label").text("Loaded CodeScoop");
+              $("#initializing").css("display", "block");
+              $("#title").text("Launching the CodeScoop tool...");
+              // Start the evaluation of the scripts shortly after the load
+              // is finished.  There should be a short time buffer before
+              // loading the scripts, so the style changes for progress
+              // get processed before blocking on script loading.
+              setTimeout(function() {
+                $.globalEval(resourcesText);
+                $.globalEval(atomText);
+                startAtom();
+              }, 500);
+            }
+          });
+        }
+      });
     }
 
-    var atomProgress = trackProgress('#atom-progress', '#atom-label', "CodeScoop")
-    var resourcesProgress = trackProgress('#resources-progress', '#resources-label', 'CodeScoop libraries');
+  </script>
 
-    // Resources must be loaded before Atom
-    $.ajax({
-      dataType: "script",
-      url: "demo/atom-resources.js",
-      xhr: resourcesProgress,
-      success: function() {
-        $.ajax({
-          dataType: "script",
-          url: "demo/atom.js",
-          xhr: atomProgress,
-          success: startAtom,
-        });
-      }
-    });
+  <script>
 
   </script>
+
+
 </body>
 </html>
